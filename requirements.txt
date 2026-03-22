@@ -1,0 +1,5 @@
+django
+djangorestframework
+python-dotenv
+requests
+mysqlclient>=2.2.1
