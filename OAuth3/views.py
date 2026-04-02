@@ -84,10 +84,65 @@ class VerifyMFAView(APIView):
         if not valid:
             return Response({"detail": "Código inválido o expirado"}, status=status.HTTP_400_BAD_REQUEST)
 
+        # 🔥 marcar como usado
+        challenge.consumed_at = timezone.now()
+        challenge.save()
+
         return Response({
             "message": "MFA validado correctamente",
             "user": {
                 "id": user.id,
                 "email": user.email,
+                "nombres": user.nombres,
+                "apellidos": user.apellidos,
+            }
+        }, status=status.HTTP_200_OK)
+
+
+class ForgotPasswordView(APIView):
+    def post(self, request):
+        return Response(
+            {"message": "Ingrese nueva contraseña directamente"},
+            status=status.HTTP_200_OK
+        )
+
+
+class ResetPasswordView(APIView):
+    def post(self, request):
+        email = request.data.get("email")
+        new_password = request.data.get("new_password")
+
+        if not email or not new_password:
+            return Response(
+                {"detail": "Email y nueva contraseña son requeridos"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if len(new_password) < 8:
+            return Response(
+                {"detail": "La contraseña debe tener al menos 8 caracteres"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = AppUser.objects.get(email=email)
+        except AppUser.DoesNotExist:
+            return Response(
+                {"detail": "Usuario no encontrado"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # 🔥 Actualiza la contraseña
+        user.set_password(new_password)
+        user.save(update_fields=["password"])
+
+        # 🔥 AQUÍ VA LO NUEVO
+        return Response({
+            "message": "Contraseña actualizada correctamente",
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "nombres": user.nombres,
+                "apellidos": user.apellidos,
             }
         }, status=status.HTTP_200_OK)

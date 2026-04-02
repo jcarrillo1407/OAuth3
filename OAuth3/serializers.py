@@ -41,3 +41,23 @@ class LoginSerializer(serializers.Serializer):
 class VerifyMFASerializer(serializers.Serializer):
     email = serializers.EmailField()
     code = serializers.CharField(min_length=6, max_length=6)
+    
+
+class ForgotPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    code = serializers.CharField(min_length=6, max_length=6)
+    new_password = serializers.CharField(min_length=8)
+
+    def validate_new_password(self, value):
+        import re
+        if not re.search(r"[A-Z]", value):
+            raise serializers.ValidationError("Debe tener una mayúscula")
+        if not re.search(r"\d", value):
+            raise serializers.ValidationError("Debe tener un número")
+        if not re.search(r"[\W_]", value):
+            raise serializers.ValidationError("Debe tener un símbolo")
+        return value
